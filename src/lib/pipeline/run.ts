@@ -1,6 +1,6 @@
 import "server-only";
 import { COLLECTORS, CollectorConfigError } from "../collectors";
-import { config, YT, type Config } from "../config";
+import { config, FILTERED_KEEP_DAYS, YT, type Config } from "../config";
 import { db, must } from "../db";
 import { AllKeysParkedError } from "../ai/keyring";
 import { claim, complete, defer, enqueueMany, fail, JOB_TYPES, releaseStale } from "../queue";
@@ -366,6 +366,15 @@ export async function cleanup(retentionDays: number): Promise<Record<string, num
   const cutoff = new Date(now - retentionDays * 86_400_000).toISOString();
   const items = await db().from("items").delete().lt("last_seen_at", cutoff).select("id");
   if (items.error) throw new Error(`cleanup items: ${items.error.message}`);
+  // Comments the keyword filter dropped go after FILTERED_KEEP_DAYS (the
+  // AI-rejected ones, filter_reason "ai:...", stay for the 30 days above).
+  const filtered = await db()
+    .from("items")
+    .delete({ count: "exact" })
+    .eq("status", "filtered")
+    .lt("collected_at", new Date(now - FILTERED_KEEP_DAYS * 86_400_000).toISOString())
+    .not("filter_reason", "like", "ai:%");
+  if (filtered.error) throw new Error(`cleanup filtered: ${filtered.error.message}`);
   const runs = await db().from("runs").delete().lt("started_at", new Date(now - 60 * 86_400_000).toISOString()).select("id");
   if (runs.error) throw new Error(`cleanup runs: ${runs.error.message}`);
   const jobs = await db().from("jobs").delete().in("status", ["done", "failed"]).lt("updated_at", cutoff).select("id");
@@ -393,6 +402,16 @@ export async function cleanup(retentionDays: number): Promise<Record<string, num
     .not("title", "is", null)
     .select("video_id");
   if (stripped.error) throw new Error(`cleanup strip videos: ${stripped.error.message}`);
+  // A watched video the count check has not reached for 30 days loses its
+  // YouTube text too; the next count check fills it in again before any read.
+  // comment_count is kept, so clearing does not look like a change and cost a read.
+  const strippedActive = await db()
+    .from("videos")
+    .update({ title: null, channel_title: null }, { count: "exact" })
+    .lt("last_seen_at", cutoff)
+    .eq("status", "active")
+    .not("title", "is", null);
+  if (strippedActive.error) throw new Error(`cleanup strip active videos: ${strippedActive.error.message}`);
   const channels = await db().from("channels").delete().lt("last_seen_at", cutoff).eq("followed", false).select("channel_id");
   if (channels.error) throw new Error(`cleanup channels: ${channels.error.message}`);
   const yieldRes = await db().rpc("refresh_video_yield");
@@ -400,10 +419,11 @@ export async function cleanup(retentionDays: number): Promise<Record<string, num
 
   return {
     items: items.data?.length ?? 0,
+    filtered: filtered.count ?? 0,
     runs: runs.data?.length ?? 0,
     jobs: jobs.data?.length ?? 0,
     videos: videos.data?.length ?? 0,
-    videos_cleared: stripped.data?.length ?? 0,
+    videos_cleared: (stripped.data?.length ?? 0) + (strippedActive.count ?? 0),
     channels: channels.data?.length ?? 0,
     unfollowed: unfollowed.data?.length ?? 0,
   };

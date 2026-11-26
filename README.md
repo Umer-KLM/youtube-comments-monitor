@@ -47,7 +47,9 @@ In Supabase → SQL Editor, paste and run:
 1. `supabase/migrations/0001_schema.sql`: every table, index, function and the row-level-security lock. Safe to run again on an existing project; it changes nothing that already exists.
 2. `supabase/migrations/0003_watchlist.sql`: the watch list (topics, videos, channels, sweep_units, quota_ledger, the `upsert_videos` and `spend_quota` functions, the new `items` columns). Safe to run again.
 3. `supabase/migrations/0004_facets.sql`: the `tag_facets` function behind the filter dropdown counts on the YouTube page. Safe to run again. (Without it the app counts in JavaScript by reading every tagged row, which gives the same numbers but gets slower as the list grows.)
-4. `supabase/migrations/0002_cron.sql`, only after the app is deployed (step 4 below). The app URL is already filled in; replace the `<CRON_SECRET>` placeholder first.
+4. `supabase/migrations/0005_slim.sql`: drops a duplicate index to save space on the free plan. Safe to run again.
+5. `supabase/migrations/0006_grants.sql`: lets the server key (`service_role`) use the tables and functions. Newer Supabase projects no longer grant this by default, and without it every call fails with "permission denied". Safe to run again.
+6. `supabase/migrations/0002_cron.sql`, only after the app is deployed (step 4 below). The app URL is already filled in; replace the `<CRON_SECRET>` placeholder first.
 
 ### 3. Run locally
 
@@ -88,7 +90,7 @@ That registers seven jobs inside your database (docs/coverage-plan.html section 
 | radar_discover | every 6 hours at :20 | `/api/cron/discover` | Jobs 2 + 3: "newest since last look" per phrase, one relevance search a day |
 | radar_channels | daily 08:30 (just after the quota reset) | `/api/cron/channels` | Job 4: uploads playlists, the newest page of every followed channel, then history walks that resume where they stopped |
 | radar_process | every hour at :30 | `/api/cron/process` | Leftover AI tagging |
-| radar_cleanup | daily 03:00 | `/api/cron/cleanup` | Job 7: 30-day purge, unfollow quiet channels |
+| radar_cleanup | daily 03:00 | `/api/cron/cleanup` | Job 7: 30-day purge, keyword-filtered comments after 3 days, unfollow quiet channels |
 | radar_coverage | Mondays 09:00 | `/api/cron/coverage` | Job 8: compare 20 followed channels' real upload lists with the watch list |
 
 The database calls each route with `Authorization: Bearer <CRON_SECRET>` and waits only 10 seconds (30 for cleanup), so every route except cleanup answers "started" at once and does the work in the background (it still gets the full 5 minutes). Add `?wait=1` to run inline and see the result, for example by hand:

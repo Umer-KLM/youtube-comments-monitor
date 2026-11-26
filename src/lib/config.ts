@@ -35,6 +35,16 @@ export const NAV_PLATFORMS: Platform[] = ["youtube"];
 export const RETENTION_DAYS = 30;
 
 /**
+ * Comments the keyword filter dropped are deleted this many days after they
+ * were collected (the daily cleanup). They were ~98% of all rows and filled
+ * the 500 MB free database. Nothing needs them: the reader only reads comments
+ * newer than its cursor, and a re-fetched one is just filtered again for free.
+ * Comments the AI called irrelevant are kept to the normal 30 days, so the AI
+ * is never asked about the same comment twice. Added 26 Nov 2026.
+ */
+export const FILTERED_KEEP_DAYS = 3;
+
+/**
  * The Shortlist page: the comments worth a look right now. A comment is on it
  * when the AI called it a medicine, app or complaint question (not a general
  * nutrition question), its score is at least min_score, and it was posted in
@@ -60,9 +70,10 @@ export const YT = {
   sweep_floor: "2026-01-01T00:00:00Z",
   /**
    * The sweep stops once the day's searches reach this total, so the discover
-   * job keeps its ~30 a day (6 phrases x 4 runs + 6 relevance) under the cap of 95.
+   * job keeps its ~50 a day (10 phrases x 4 runs + 10 relevance) under the cap of 95.
+   * Was 64 with 6 phrases; lowered to 40 on 26 Nov 2026 when 4 phrases were added.
    */
-  sweep_search_cap: 64,
+  sweep_search_cap: 40,
   /** Pages of 50 per window before we assume the ~500 cap and split the window. */
   sweep_pages_per_window: 10,
   /** Smallest window the sweep will split down to. */
@@ -107,8 +118,14 @@ export const YT = {
   reread_days: 7,
   /** After this long without a count change a video is checked weekly. */
   quiet_days: 60,
-  /** After this long without any change a video is retired. */
-  retire_after_days: 180,
+  /**
+   * After this long without any change a video is retired. Was 180 until
+   * 26 Nov 2026; the watch list grew to 157k active videos, more than the
+   * count check can cover and too big for the free database.
+   */
+  retire_after_days: 60,
+  /** A video still at zero comments this long after it was published (and found) is retired. */
+  retire_empty_after_days: 14,
   /** A channel with no on-topic upload for this long stops being listed daily. */
   unfollow_after_days: 120,
   /** Channels compared with their real upload list by the weekly coverage check. */
@@ -120,7 +137,7 @@ export const YT = {
 export const CONFIG = {
   /**
    * YouTube search phrases. Each one is the `q` of the sweep, "newest since"
-   * and relevance searches (src/lib/youtube). All six find people asking
+   * and relevance searches (src/lib/youtube). All ten find people asking
    * about food with a medicine or condition. The three calorie-app phrases
    * were removed on 17 Sep 2026 by the founder's decision. The app seeds the
    * `topics` table from this list on every discover run.
@@ -132,6 +149,12 @@ export const CONFIG = {
     "thyroid diet",
     "hypothyroidism diet",
     "Indian weight loss diet",
+    // Added 26 Nov 2026: conditions and users hashhealth.io targets that no
+    // phrase searched (hypertension, anemia, heart health, GLP-1 users).
+    "high blood pressure diet",
+    "anemia diet",
+    "cholesterol diet",
+    "Ozempic diet",
   ],
 
   /**
@@ -142,6 +165,8 @@ export const CONFIG = {
   keywords_allow: [
     // medicines
     "metformin", "warfarin", "levothyroxine", "thyroxine", "statin", "atorvastatin", "rosuvastatin",
+    // "statins" separately: terms match whole words only, so "statin" never matched the plural.
+    "statins",
     "insulin", "amlodipine", "losartan", "telmisartan", "letrozole", "glimepiride", "sitagliptin",
     "empagliflozin", "ozempic", "semaglutide", "mounjaro", "blood thinner", "bp tablet", "sugar tablet",
     "sugar medicine", "bp medicine", "medication", "medicine", "meds", "tablet", "tablets", "pills",

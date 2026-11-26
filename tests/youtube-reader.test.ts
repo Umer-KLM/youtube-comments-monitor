@@ -80,10 +80,16 @@ describe("nextCheckAt", () => {
 });
 
 describe("shouldRetire", () => {
-  it("retires only an old video with no change for 180 days", () => {
-    expect(shouldRetire(row({ published_at: "2025-06-01T00:00:00Z", last_change_at: "2026-01-01T00:00:00Z" }), now)).toBe(true);
-    expect(shouldRetire(row({ published_at: "2026-06-01T00:00:00Z", last_change_at: "2026-01-01T00:00:00Z" }), now)).toBe(false);
-    expect(shouldRetire(row({ published_at: "2025-06-01T00:00:00Z", last_change_at: "2026-09-01T00:00:00Z" }), now)).toBe(false);
+  it("retires only a video older than 60 days with no change for 60 days", () => {
+    expect(shouldRetire(row({ published_at: "2026-07-01T00:00:00Z", last_change_at: "2026-07-10T00:00:00Z" }), now)).toBe(true);
+    expect(shouldRetire(row({ published_at: "2026-08-01T00:00:00Z", last_change_at: "2026-07-10T00:00:00Z" }), now)).toBe(false);
+    expect(shouldRetire(row({ published_at: "2026-07-01T00:00:00Z", last_change_at: "2026-08-01T00:00:00Z" }), now)).toBe(false);
+  });
+  it("retires a video still at zero comments after 14 days", () => {
+    expect(shouldRetire(row({ comment_count: 0, published_at: "2026-09-01T00:00:00Z", last_change_at: "2026-09-02T00:00:00Z" }), now)).toBe(true);
+    expect(shouldRetire(row({ comment_count: 0, published_at: "2026-09-10T00:00:00Z", last_change_at: "2026-09-10T00:00:00Z" }), now)).toBe(false);
+    expect(shouldRetire(row({ comment_count: 0, published_at: "2026-09-01T00:00:00Z", last_change_at: "2026-09-10T00:00:00Z" }), now)).toBe(false);
+    expect(shouldRetire(row({ comment_count: 3, published_at: "2026-09-01T00:00:00Z", last_change_at: "2026-09-02T00:00:00Z" }), now)).toBe(false);
   });
 });
 

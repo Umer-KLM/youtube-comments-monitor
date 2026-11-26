@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { aiConfigured } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
-import { CONFIG, RETENTION_DAYS, SHORTLIST } from "@/lib/config";
+import { CONFIG, FILTERED_KEEP_DAYS, RETENTION_DAYS, SHORTLIST } from "@/lib/config";
 import { envPresence } from "@/lib/env";
 import { PageHeader, Section } from "@/components/stat";
 
@@ -35,7 +35,7 @@ const JOBS: Array<{ name: string; when: string; what: string; icon: LucideIcon }
   { name: "Find older videos", when: "Every 2 hours, until done", what: "Works backwards month by month to January 2026. Switches itself off when finished.", icon: History },
   { name: "Follow channels", when: "Once a day", what: "Reads the newest uploads from channels that have made a video on our topics.", icon: Tv },
   { name: "Catch up", when: "Every hour", what: "Sends anything still waiting to Gemini and refreshes the scores.", icon: RefreshCw },
-  { name: "Clean up", when: "Once a day", what: `Deletes comments ${RETENTION_DAYS} days after YouTube last showed them. Stops following channels that have gone quiet.`, icon: Trash2 },
+  { name: "Clean up", when: "Once a day", what: `Deletes comments ${RETENTION_DAYS} days after YouTube last showed them, and comments the keyword filter dropped after ${FILTERED_KEEP_DAYS} days. Stops following channels that have gone quiet.`, icon: Trash2 },
   { name: "Coverage check", when: "Once a week", what: "Compares the real upload lists of 20 followed channels with the watch list, to catch anything the searches missed.", icon: ShieldCheck },
 ];
 

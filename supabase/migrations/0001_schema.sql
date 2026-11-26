@@ -34,7 +34,6 @@ create table if not exists items (
   meta          jsonb not null default '{}'::jsonb,   -- e.g. {"video_id": "...", "video_title": "...", "topic": "..."}
   unique (platform, external_id)
 );
-create index if not exists items_platform_status_score on items (platform, status, score desc nulls last);
 create index if not exists items_collected_at on items (collected_at);
 create index if not exists items_status_score on items (status, score desc nulls last);
 

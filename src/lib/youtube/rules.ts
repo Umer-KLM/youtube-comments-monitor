@@ -162,9 +162,15 @@ export function nextCheckAt(v: Pick<VideoRow, "published_at" | "last_change_at" 
   return new Date(now.getTime() + 7 * DAY);
 }
 
-/** Retired: nothing moved for a long time and the video is old. */
-export function shouldRetire(v: Pick<VideoRow, "published_at" | "last_change_at" | "first_seen_at">, now: Date): boolean {
-  return daysSince(v.last_change_at ?? v.first_seen_at, now) >= YT.retire_after_days && ageDays(v.published_at, now) >= YT.retire_after_days;
+/**
+ * Retired: nothing moved for a long time and the video is old, or the video
+ * is a couple of weeks old and still has no comments at all.
+ */
+export function shouldRetire(v: Pick<VideoRow, "published_at" | "last_change_at" | "first_seen_at" | "comment_count">, now: Date): boolean {
+  const quiet = daysSince(v.last_change_at ?? v.first_seen_at, now);
+  const age = ageDays(v.published_at, now);
+  if (quiet >= YT.retire_after_days && age >= YT.retire_after_days) return true;
+  return v.comment_count === 0 && quiet >= YT.retire_empty_after_days && age >= YT.retire_empty_after_days;
 }
 
 // ---------------------------------------------------------------------------
