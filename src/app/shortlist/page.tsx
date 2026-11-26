@@ -86,7 +86,7 @@ export default async function ShortlistPage({ searchParams }: { searchParams: Pr
                 <Inbox className="size-8 text-stone-400" aria-hidden />
                 <p className="mt-3 font-medium text-stone-800">Nothing on the shortlist right now</p>
                 <p className="mt-1 max-w-md text-sm text-stone-500">
-                  New YouTube comments are read every 2 hours. The{" "}
+                  New YouTube comments are read every 3 hours. The{" "}
                   <Link href="/platforms/youtube" className="underline">
                     YouTube
                   </Link>{" "}

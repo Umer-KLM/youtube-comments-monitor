@@ -19,7 +19,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     key: "youtube",
     label: "YouTube",
     blurb:
-      "Every video about the topics is remembered in a watch list: a one-time month-by-month sweep of the year, newest-first searches four times a day, one relevance search a day, and the upload lists of every channel that made an on-topic video. Every 2 hours the comment counts of the watched videos are checked (50 videos per unit) and only the videos that changed are read, newest comment first, up to the last one already seen. Free allowance: 100 searches/day plus 10,000 units/day, counted in a ledger before every call.",
+      "Every video about the topics is remembered in a watch list: a one-time month-by-month sweep of the year, newest-first searches four times a day, one relevance search a day, and the upload lists of every channel that made an on-topic video. Every 3 hours the comment counts of the watched videos are checked (50 videos per unit) and only the videos that changed are read, newest comment first, up to the last one already seen. Free allowance: 100 searches/day plus 10,000 units/day, counted in a ledger before every call.",
     requiredEnv: ["YOUTUBE_API_KEY"],
   },
 };

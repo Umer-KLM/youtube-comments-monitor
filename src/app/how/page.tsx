@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { aiConfigured } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
-import { CONFIG, FILTERED_KEEP_DAYS, RETENTION_DAYS, SHORTLIST } from "@/lib/config";
+import { CONFIG, FILTERED_KEEP_DAYS, RETENTION_DAYS, SHORTLIST, YT } from "@/lib/config";
 import { envPresence } from "@/lib/env";
 import { PageHeader, Section } from "@/components/stat";
 
@@ -30,9 +30,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "How it works" };
 
 const JOBS: Array<{ name: string; when: string; what: string; icon: LucideIcon }> = [
-  { name: "Read comments", when: "Every 2 hours", what: "Checks which watched videos got new comments, reads them, filters them, sends the survivors to Gemini.", icon: MessageSquareText },
-  { name: "Find new videos", when: "Every 6 hours", what: "Searches each topic for videos uploaded since the last look.", icon: Search },
-  { name: "Find older videos", when: "Every 2 hours, until done", what: "Works backwards month by month to January 2026. Switches itself off when finished.", icon: History },
+  { name: "Read comments", when: "Every 3 hours", what: "Checks which watched videos got new comments, reads them, filters them, sends the survivors to Gemini.", icon: MessageSquareText },
+  { name: "Find new videos", when: "Every 6 hours", what: "Searches each topic for videos uploaded since the last look, plus one search a day for the most relevant videos.", icon: Search },
+  { name: "Find older videos", when: "Every 3 hours, until done", what: "Works backwards month by month to January 2026 for each topic. Rests once every topic is done, and starts again for a topic that is added later.", icon: History },
   { name: "Follow channels", when: "Once a day", what: "Reads the newest uploads from channels that have made a video on our topics.", icon: Tv },
   { name: "Catch up", when: "Every hour", what: "Sends anything still waiting to Gemini and refreshes the scores.", icon: RefreshCw },
   { name: "Clean up", when: "Once a day", what: `Deletes comments ${RETENTION_DAYS} days after YouTube last showed them, and comments the keyword filter dropped after ${FILTERED_KEEP_DAYS} days. Stops following channels that have gone quiet.`, icon: Trash2 },
@@ -53,7 +53,7 @@ export default async function HowPage() {
   return (
     <div>
       <PageHeader icon={<BookOpen className="size-5 text-emerald-700" aria-hidden />} title="How it works">
-        The tool watches YouTube videos about diabetes, PCOS and thyroid diets, reads the comments under them, and shows you the ones where someone is asking a question Hash can answer. You decide whom to approach. The tool never writes or posts anything.
+        The tool watches YouTube videos about diets for diabetes, PCOS, thyroid, high blood pressure, anemia and cholesterol, and for people on Ozempic. It reads the comments under them, and shows you the ones where someone is asking a question Hash can answer. You decide whom to approach. The tool never writes or posts anything.
       </PageHeader>
 
       <Section step={1} icon={Search} title="What we search for">
@@ -81,9 +81,12 @@ export default async function HowPage() {
               <History className="size-4 text-emerald-700" aria-hidden />
               Older videos
             </div>
-            <p className="mt-2 leading-relaxed text-stone-600">YouTube search only shows about 500 results per search, so it cannot list everything at once. We work backwards one month at a time, down to January 2026. This runs once and then stops.</p>
+            <p className="mt-2 leading-relaxed text-stone-600">YouTube search only shows about 500 results per search, so it cannot list everything at once. We work backwards one month at a time, down to January 2026. This runs once per topic and then rests.</p>
           </div>
         </div>
+        <p className="mt-3 text-sm text-stone-600">
+          YouTube&apos;s free allowance is 100 searches and 10,000 units a day. We stop at {YT.ledger_caps.searches} searches and {YT.ledger_caps.units.toLocaleString()} units, so the tool never pays anything. That is why the older-videos search for a new topic takes a few weeks.
+        </p>
       </Section>
 
       <Section step={3} icon={Timer} title="What runs automatically" description="A timer inside the database runs these on its own. Nobody presses anything.">
@@ -113,11 +116,14 @@ export default async function HowPage() {
           <ul className="space-y-2 text-stone-700">
             {[
               <>We check whether a watched video has new comments, and read only the new ones.</>,
+              <>
+                A video stops being watched after {YT.retire_after_days} days without a new comment, or after {YT.retire_empty_after_days} days if it still has none. If a search finds it again, it is watched again.
+              </>,
               <>We keep the comment text, the time, the likes and which video it came from.</>,
               <>
                 <b>We never store the commenter&apos;s name.</b> Comments by the video&apos;s own creator are dropped.
               </>,
-              <>Comments are deleted {RETENTION_DAYS} days after YouTube last showed them, as YouTube requires.</>,
+              <>Comments are deleted {RETENTION_DAYS} days after YouTube last showed them, as YouTube requires. Comments the word check drops are deleted sooner, after {FILTERED_KEEP_DAYS} days.</>,
             ].map((line, i) => (
               <li key={i} className="flex items-start gap-2.5">
                 <CircleCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
@@ -132,7 +138,7 @@ export default async function HowPage() {
         step={5}
         icon={Filter}
         title="How we decide what to show"
-        description="Most comments under these videos are praise or chatter. Two checks remove them. The first is a simple word check on our own server and costs nothing — it removes about 99 out of every 100 comments. Only what survives is sent to Gemini."
+        description="Most comments under these videos are praise or chatter. Two checks remove them. The first is a simple word check on our own server and costs nothing — it removes about 98 out of every 100 comments. Only what survives is sent to Gemini."
       >
         <div className={wrap}>
           <table className="w-full text-sm">

@@ -7,5 +7,5 @@ import { runSweep } from "@/lib/youtube/sweep";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-/** Job 1 · The one-time month sweep, every 2 hours until every phrase and month is done. */
+/** Job 1 · The one-time month sweep, every 3 hours until every phrase and month is done. */
 export const GET = cronHandler("sweep", () => runJob("sweep", () => runSweep(youtubeContext(), { timeBudgetMs: YT.job_time_budget_ms })));

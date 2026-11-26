@@ -85,8 +85,8 @@ That registers seven jobs inside your database (docs/coverage-plan.html section 
 
 | Job | Schedule (UTC) | Route | Does |
 |---|---|---|---|
-| radar_collect | every 2 hours at :00 | `/api/cron/collect` | Job 6: check comment counts, read the videos that changed, tag |
-| radar_sweep | every 2 hours at :10 | `/api/cron/sweep` | Job 1: the one-time month sweep of every phrase, newest month first; switches itself off when done |
+| radar_collect | every 3 hours at :00 | `/api/cron/collect` | Job 6: check comment counts, read the videos that changed, tag |
+| radar_sweep | every 3 hours at :10 | `/api/cron/sweep` | Job 1: the one-time month sweep of every phrase, newest month first; rests when done and starts again for a phrase added later |
 | radar_discover | every 6 hours at :20 | `/api/cron/discover` | Jobs 2 + 3: "newest since last look" per phrase, one relevance search a day |
 | radar_channels | daily 08:30 (just after the quota reset) | `/api/cron/channels` | Job 4: uploads playlists, the newest page of every followed channel, then history walks that resume where they stopped |
 | radar_process | every hour at :30 | `/api/cron/process` | Leftover AI tagging |
