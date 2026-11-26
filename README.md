@@ -1,4 +1,4 @@
-# Hash Growth Radar
+# YouTube Comments Monitor
 
 Internal tool for the Hash Health team. It keeps a watch list of every YouTube video it can reach about diabetes, PCOS and thyroid diets, reads every new comment under those videos, keeps the ones where someone is asking the question Hash answers (food with a medicine or condition), tags and ranks them, and shows you the best ones. You open the comment and approach the person yourself. The tool never writes, suggests, or posts a reply.
 

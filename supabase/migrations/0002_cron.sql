@@ -4,7 +4,7 @@
 -- BEFORE RUNNING, replace the placeholder below (or paste the git-ignored
 -- 0002_cron.local.sql, which has it filled in):
 --   <CRON_SECRET>  the same value as CRON_SECRET in the app's environment variables
--- The app URL (https://hash-growth-radar.vercel.app, no trailing slash) is
+-- The app URL (https://youtube-comments-monitor.vercel.app, no trailing slash) is
 -- already filled in below; change it if the app moves.
 --
 -- Enable the Cron integration and the pg_net extension in the dashboard first.
@@ -42,9 +42,9 @@ declare
 begin
   select id into v_url from vault.secrets where name = 'radar_app_url';
   if v_url is null then
-    perform vault.create_secret('https://hash-growth-radar.vercel.app', 'radar_app_url');
+    perform vault.create_secret('https://youtube-comments-monitor.vercel.app', 'radar_app_url');
   else
-    perform vault.update_secret(v_url, 'https://hash-growth-radar.vercel.app');
+    perform vault.update_secret(v_url, 'https://youtube-comments-monitor.vercel.app');
   end if;
 
   select id into v_secret from vault.secrets where name = 'radar_cron_secret';
@@ -72,8 +72,8 @@ end $$;
 -- the app counts per quota day, so no job needs to know the reset hour.
 --
 --   job              schedule          route                  what
---   radar_collect    0 */2 * * *       /api/cron/collect      job 6: count check + read changed videos + tag
---   radar_sweep      10 */2 * * *      /api/cron/sweep        job 1: month sweep, newest month first, until done
+--   radar_collect    0 */3 * * *       /api/cron/collect      job 6: count check + read changed videos + tag
+--   radar_sweep      10 */3 * * *      /api/cron/sweep        job 1: month sweep, newest month first, until done
 --   radar_discover   20 */6 * * *      /api/cron/discover     jobs 2+3: newest-since searches, relevance daily
 --   radar_channels   30 8 * * *        /api/cron/channels     job 4: uploads playlists, daily page, history walks
 --   radar_process    30 * * * *        /api/cron/process      leftover AI tagging
@@ -101,8 +101,8 @@ begin
   );
 end $$;
 
-select radar_schedule('radar_collect',  '0 */2 * * *',  '/api/cron/collect',  10000);
-select radar_schedule('radar_sweep',    '10 */2 * * *', '/api/cron/sweep',    10000);
+select radar_schedule('radar_collect',  '0 */3 * * *',  '/api/cron/collect',  10000);
+select radar_schedule('radar_sweep',    '10 */3 * * *', '/api/cron/sweep',    10000);
 select radar_schedule('radar_discover', '20 */6 * * *', '/api/cron/discover', 10000);
 select radar_schedule('radar_channels', '30 8 * * *',   '/api/cron/channels', 10000);
 select radar_schedule('radar_process',  '30 * * * *',   '/api/cron/process',  10000);
