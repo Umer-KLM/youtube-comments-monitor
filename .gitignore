@@ -49,3 +49,9 @@ AGENTS.md
 
 # filled-in cron file with the real secret, never committed
 *.local.sql
+
+# local Claude Code plugin state
+.omc/
+
+# personal screenshots
+*screenshot*.png
