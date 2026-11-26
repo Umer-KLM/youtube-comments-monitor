@@ -2,6 +2,7 @@ import "server-only";
 import { NAV_PLATFORMS, SHORTLIST } from "./config";
 import { shortlistFilter } from "./shortlist";
 import { db } from "./db";
+import type { InsightRow } from "./insights";
 import { INTENTS, type Intent, type ItemRow, type ItemStatus, type Platform, type RunRow, type TagRow } from "./types";
 
 export interface QueueEntry {
@@ -235,6 +236,46 @@ export async function tagFacets(platform: Platform, filter: QueueFilter = {}, to
     if (!filter.term || terms.includes(filter.term)) intents[t.intent] = (intents[t.intent] ?? 0) + 1;
   }
   return { conditions: rankTop(cond, top, filter.term), medicines: rankTop(med, top, filter.term), intents };
+}
+
+/**
+ * Every approachable tagged question posted since `since`, for the Insights
+ * and Content ideas pages (src/lib/insights.ts does the counting). Tagged,
+ * read and legacy "posted" items count; "irrelevant" and "do not reply" do
+ * not. Read 1,000 rows at a time (the most Supabase returns per request).
+ */
+export async function loadInsightRows(since: Date, maxRows = 30_000): Promise<InsightRow[]> {
+  const PAGE = 1000;
+  const out: InsightRow[] = [];
+  for (let from = 0; from < maxRows; from += PAGE) {
+    const res = await db()
+      .from("items")
+      .select("id, posted_at, community, tags!inner(intent, conditions, medicines, fit_score, summary)")
+      .in("status", ["tagged", "skipped", "posted"])
+      .in("platform", NAV_PLATFORMS)
+      .gte("posted_at", since.toISOString())
+      .eq("tags.do_not_reply", false)
+      .neq("tags.intent", "irrelevant")
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (res.error) throw new Error(`loadInsightRows: ${res.error.message}`);
+    const batch = (res.data ?? []) as Array<{ posted_at: string | null; community: string | null; tags: unknown }>;
+    for (const row of batch) {
+      const t = normaliseTag(row.tags);
+      if (!t) continue;
+      out.push({
+        intent: t.intent,
+        conditions: t.conditions ?? [],
+        medicines: t.medicines ?? [],
+        fit: t.fit_score,
+        summary: t.summary ?? null,
+        community: row.community,
+        postedAt: row.posted_at,
+      });
+    }
+    if (batch.length < PAGE) break;
+  }
+  return out;
 }
 
 export type StatusCounts = Record<Platform, Record<ItemStatus, number>>;

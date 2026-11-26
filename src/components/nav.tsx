@@ -7,7 +7,7 @@ import { NavLinks, type NavItem } from "./nav-links";
 
 /**
  * Shortlist (badge = comments on it now), one link per platform (badge =
- * everyone tagged there), Read (comments marked as read), and a plain "How it
+ * everyone tagged there), Read (comments marked as read), Insights (counts and content ideas), and a plain "How it
  * works" page. Nothing here changes any setting.
  */
 export async function Nav() {
@@ -25,6 +25,7 @@ export async function Nav() {
     { href: "/shortlist", label: "Shortlist", icon: "shortlist", countKey: "shortlist" },
     ...NAV_PLATFORMS.map((p): NavItem => ({ href: `/platforms/${p}`, label: PLATFORM_INFO[p].label, icon: p, countKey: `platform:${p}` })),
     { href: "/read", label: "Read", icon: "read", countKey: "read" },
+    { href: "/insights", label: "Insights", icon: "insights" },
     { href: "/how", label: "How it works", icon: "how" },
   ];
 

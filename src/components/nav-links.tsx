@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { BookOpen, CheckCheck, ListChecks } from "lucide-react";
+import { BookOpen, ChartColumn, CheckCheck, ListChecks } from "lucide-react";
 import { cx } from "@/lib/format";
 import type { NavCounts } from "@/lib/queries";
 import { YouTubeIcon } from "./icons";
 import { COUNTS_CHANGED } from "./toast";
 
 /** A name, not a component: the nav is built on the server and icons cannot cross to the client. */
-export type NavIcon = "shortlist" | "youtube" | "read" | "how";
+export type NavIcon = "shortlist" | "youtube" | "read" | "insights" | "how";
 
 export interface NavItem {
   href: string;
@@ -22,7 +22,7 @@ export interface NavItem {
 
 function Icon({ name, active }: { name: NavIcon; active: boolean }) {
   if (name === "youtube") return <YouTubeIcon className={cx("size-4 transition", active && "[&_rect]:fill-white [&_path]:fill-emerald-700")} />;
-  const C = name === "shortlist" ? ListChecks : name === "read" ? CheckCheck : BookOpen;
+  const C = name === "shortlist" ? ListChecks : name === "read" ? CheckCheck : name === "insights" ? ChartColumn : BookOpen;
   return <C className="size-4" aria-hidden />;
 }
 
@@ -120,7 +120,7 @@ export function NavLinks({ items, initialCounts }: { items: NavItem[]; initialCo
   }, [measure]);
 
   return (
-    <div ref={containerRef} className="relative grid grid-cols-4 gap-1 whitespace-nowrap text-sm sm:flex sm:items-center lg:flex-col lg:items-stretch">
+    <div ref={containerRef} className="relative grid grid-cols-5 gap-1 whitespace-nowrap text-sm sm:flex sm:items-center lg:flex-col lg:items-stretch">
       <span
         aria-hidden
         className={cx(
